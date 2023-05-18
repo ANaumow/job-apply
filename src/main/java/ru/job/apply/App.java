@@ -10,23 +10,20 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class Test {
+public class App {
 
     public static void main(String[] args) throws IOException {
-        new Test().run();
+        new App().run(args[0]);
     }
 
-    StringBuilder sb = new StringBuilder();
+    private final String EMPTY = "\"\"";
+    private final StringBuilder sb = new StringBuilder();
 
-    private void run() throws IOException {
+    private void run(String filename) throws IOException {
         long startTime = System.nanoTime();
 
         // Колонка, Id числа, Номера строк
         Map<Integer, Map<Integer, List<Integer>>> index = new HashMap<>();
-        final String EMPTY = "\"\"";
-//        final String filename = "test.txt";
-        final String filename = "lng.csv";
-//        final String filename = "tete";
 
         List<String> rawLines;
         try (Stream<String> fileLines = Files.lines(new File(filename).toPath())) {
