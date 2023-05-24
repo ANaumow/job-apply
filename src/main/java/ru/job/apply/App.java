@@ -16,7 +16,8 @@ public class App {
         new App().run(args[0]);
     }
 
-    private final String EMPTY = "\"\"";
+    private final String EMPTY_QUOTES = "\"\"";
+    private final String EMPTY = "";
     private final StringBuilder sb = new StringBuilder();
 
     private void run(String filename) throws IOException {
@@ -25,19 +26,16 @@ public class App {
         // Колонка, Id числа, Номера строк
         Map<Integer, Map<Integer, List<Integer>>> index = new HashMap<>();
 
-        List<String> rawLines;
+        List<List<String>> lines;
         try (Stream<String> fileLines = Files.lines(new File(filename).toPath())) {
-            Predicate<String> linePredicate = Pattern.compile("^\"[^\"]*\"(;\"[^\"]*\")*$")
+            Predicate<String> wordPredicate = Pattern.compile("(^\"[^\"]*\"$)|(^[^\"]*$)")
                     .asPredicate();
 
-            rawLines = fileLines.distinct()
-                    .filter(linePredicate)
+            lines = fileLines.distinct()
+                    .map(line -> List.of(line.split(";")))
+                    .filter(line -> line.stream().allMatch(wordPredicate))
                     .toList();
         }
-
-        List<List<String>> lines = rawLines.stream()
-                .map(line -> List.of(line.split(";")))
-                .toList();
 
         List<String> uniqueWords = lines.stream()
                 .flatMap(Collection::stream)
@@ -56,7 +54,7 @@ public class App {
             for (int col = 0; col < line.size(); col++) {
                 String word = line.get(col);
 
-                if (word.equals(EMPTY))
+                if (word.equals(EMPTY_QUOTES) || word.equals(EMPTY))
                     continue;
 
                 Integer wId = wordIds.get(word);
@@ -91,7 +89,7 @@ public class App {
 
         Map<Integer, List<Integer>> groupedLines = IntStream.range(0, lines.size())
                 .boxed()
-                .collect(Collectors.groupingBy(i -> groups[i]));
+                .collect(Collectors.groupingBy(i -> find(groups, i)));
 
         List<List<Integer>> sortedGroups = groupedLines.values().stream()
                 .filter(list -> list.size() > 1)
@@ -103,13 +101,13 @@ public class App {
             List<Integer> group = sortedGroups.get(i);
             println("Группа " + (i + 1));
             for (Integer lineId : group) {
-                println(rawLines.get(lineId));
+                println(String.join(";", lines.get(lineId)));
             }
         }
 
         flush();
 
-        long endTime   = System.nanoTime();
+        long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
 //        System.out.println(totalTime / 1e9);
     }
@@ -139,7 +137,6 @@ public class App {
     void flush() {
         System.out.println(sb);
     }
-
 
 
 }
